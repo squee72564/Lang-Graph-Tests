@@ -12,4 +12,8 @@ export class Config {
     static getOpenRouterApiKey(): string {
         return getEnvVarOrFail("OPEN_ROUTER_API_KEY");
     }
+
+    static getSiteName(): string {
+        return getEnvVarOrFail("SITE_NAME");
+    }
 };

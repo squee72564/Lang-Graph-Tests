@@ -1,3 +1,14 @@
+import { configDotenv } from "dotenv";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+configDotenv({
+  path: resolve(__dirname, "../../.env.dev"),
+});
+
 export enum EnvType {
   production = "production",
   staging = "staging",
