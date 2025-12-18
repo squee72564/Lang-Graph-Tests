@@ -1,4 +1,4 @@
-import { EnvType, getEnvType, getEnvVarOrFail } from "./env-var.js";
+import { EnvType, getEnvType, getEnvVar, getEnvVarOrFail } from "./env-var.js";
 
 export class Config {
     static isDevelopment(): boolean {
@@ -13,7 +13,7 @@ export class Config {
         return getEnvVarOrFail("OPEN_ROUTER_API_KEY");
     }
 
-    static getSiteName(): string {
-        return getEnvVarOrFail("SITE_NAME");
+    static getSiteName(): string | undefined {
+        return getEnvVar("SITE_NAME");
     }
 };
