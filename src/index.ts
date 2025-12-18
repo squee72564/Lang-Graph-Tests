@@ -6,6 +6,7 @@ import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { addTool } from "./tools/examples/addition-tool.js"
 import { createLLMNode } from "./lib/llm-node.js";
 import { createLLM } from "./lib/llm-factory.js";
+import { saveGraphToPng } from "./lib/utils.js";
 
 const llm = createLLM({
   provider: "openrouter",
@@ -53,3 +54,6 @@ const result = await compiledGraph.invoke({
 
 console.log(result);
 console.log(result.messages.map(m => m.content));
+
+const graphData = await compiledGraph.getGraphAsync();
+await saveGraphToPng(graphData, "./graph.png");
