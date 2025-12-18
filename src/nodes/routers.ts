@@ -27,23 +27,39 @@ export function makeToolRouter({self, tools}: {self: string, tools: string}) {
   }
 }
 
-export function makeRouter({
-  self,
+export function makeAgentLoopRouter({
+  thinking,
   next = END,
   tools,
   end = END
 }: {
-  self: string,
+  thinking: string,
   next: string,
   tools: string,
   end: string
 }) {
   return function route(state: GraphState) {
-    const last = state.messages.at(-1);
+    const agentDecision = state.decision;
 
-    if (last instanceof AIMessage && last.tool_calls && last.tool_calls?.length > 0) {
+    if (!agentDecision) {
+      throw Error("Agent decision cannot be undefined.");
+    }
+
+    if (agentDecision.action === "tool_use") {
       return tools;
     }
 
+    if (state.step >= state.maxSteps) {
+      return end;
+    }
+
+    switch (agentDecision.action) {
+      case "completed":
+        return next;
+      case "reflect":
+        return thinking;
+      default:
+        throw Error(`Unsupported agent decision: ${agentDecision.action}`);
+    }
   }
-}
+} 

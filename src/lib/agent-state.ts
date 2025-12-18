@@ -39,6 +39,11 @@ export const AgentStateAnnotation = Annotation.Root({
     default: () => 10,
   }),
 
+  decision: Annotation<AgentState["decision"]>({
+    reducer: (_, b) => b,
+    default: () => undefined,
+  }),
+
   toolHistory: Annotation<AgentState["toolHistory"]>({
     reducer: (a, b) => a.concat(b),
     default: () => [],

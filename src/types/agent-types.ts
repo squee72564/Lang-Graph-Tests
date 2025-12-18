@@ -19,7 +19,12 @@ export type AgentState = {
   },
 
   step: number,
-  maxSteps: number
+  maxSteps: number,
+
+  decision?: {
+    reason?: string,
+    action: "tool_use" | "reflect" | "completed",
+  } | undefined,
 
   toolHistory: ToolInvocation[],
 
