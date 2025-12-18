@@ -1,4 +1,4 @@
-import { AIMessage, SystemMessage } from "@langchain/core/messages";
+import { AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 import type { GraphState } from "../lib/agent-state.js";
 import type { StructuredTool } from "@langchain/core/tools";
 import type { ChatOpenAI } from "@langchain/openai";
@@ -32,17 +32,22 @@ export function createAgentStepExecutor(
 
   return async function stepExecutorNode(state: GraphState) {
 
-    const toolResponse = await toolLLM.invoke(state.messages);
+    const lastMessage = state.messages.at(-1);
 
-    if (toolResponse.tool_calls?.length) {
-      return {
-        messages: [toolResponse],
-        decision: {
-          reason: "Found appropriate tool call",
-          action: "tool_use",
-        },
-        step: state.step + 1,
+    if (lastMessage instanceof ToolMessage) {
+      const toolResponse = await toolLLM.invoke(state.messages);
+
+      if (toolResponse.tool_calls?.length) {
+        return {
+          messages: [toolResponse],
+          decision: {
+            reason: "Found appropriate tool call",
+            action: "tool_use",
+          },
+          step: state.step + 1,
+        }
       }
+
     }
 
     const routingDecision = await decisionLLM.invoke([
