@@ -44,6 +44,11 @@ export const AgentStateAnnotation = Annotation.Root({
     default: () => undefined,
   }),
 
+  lastObservedStep: Annotation<number>({
+    reducer: (_, b) => b,
+    default: () => 0,
+  }),
+
   toolHistory: Annotation<AgentState["toolHistory"]>({
     reducer: (a, b) => a.concat(b),
     default: () => [],

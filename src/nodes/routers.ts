@@ -56,7 +56,7 @@ export function makeAgentLoopRouter({
     switch (agentDecision.action) {
       case "completed":
         return next;
-      case "reflect":
+      case "think":
         return thinking;
       default:
         throw Error(`Unsupported agent decision: ${agentDecision.action}`);

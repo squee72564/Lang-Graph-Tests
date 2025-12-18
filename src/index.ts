@@ -20,12 +20,29 @@ const stepExecutor = createAgentStepExecutor(llm, {
 
 const thinkingLLM = CreateLLMNode(
   llm,
-  new SystemMessage("You are a deep thinking agent. Look at the previous conversation history and come up with a response.")
+  new SystemMessage(`
+    You are an internal reasoning module.
+
+    Your task is to generate intermediate insights that may help answer the user's original question.
+    Do NOT answer the user.
+    Do NOT summarize the conversation.
+    Produce a short paragraph (2–4 sentences) of reasoning or considerations.
+  `)
 );
 
 const finalAnswerNode = CreateLLMNode(
   llm,
-  new SystemMessage("You are a thinking agent that is the final node before user recieves the response. You need to synthesize the previous context into an answer for the original prompt")
+  new SystemMessage(`
+    You are the final response generator.
+
+    Synthesize the prior context into a clear, complete answer to the user's original question.
+    Be concise but complete.
+    Do NOT mention internal reasoning or agent steps.
+
+    Even if the question is philosophical or open-ended,
+    provide a thoughtful, user-facing response based on the prior thinking.
+    Do NOT defer further thinking.
+  `)
 );
 
 
@@ -50,7 +67,8 @@ const compiledGraph = graph
   .addEdge("answer", END)
   .compile();
 
-  let i = 0;
+let i = 0;
+let messages = [];
 for await (const chunk of await compiledGraph.stream(
   {
     agentId: "agent-1",
@@ -64,7 +82,7 @@ for await (const chunk of await compiledGraph.stream(
         Rules:
         - If you receive a tool result that answers the question or sufficient general knowledge that answers the question, you MUST choose action "completed".
         - Include the final answer only in your response.
-        - Use "reflect" only if further reasoning is required.
+        - Use "think" only if further reasoning is required.
       `),
       new HumanMessage("What is the meaning of life?"),
     ],
@@ -80,7 +98,10 @@ for await (const chunk of await compiledGraph.stream(
 )) {
   console.log(`=== GRAPH STEP ${i++} ===`);
   console.dir(chunk, { depth: null });
+  messages.push(chunk.answer?.messages ?? chunk.stepExecutor?.messages ?? chunk.thinking?.messages ?? chunk.tools?.messages)
 }
+
+console.log(messages);
 
 // const graphData = await compiledGraph.getGraphAsync();
 // await saveGraphToPng(graphData, "./graph.png");

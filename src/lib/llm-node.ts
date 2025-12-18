@@ -12,7 +12,7 @@ type LLMNodeOptions = {
 export const AgentDecisionSchema = z.object({
   reason: z.string(),
   action: z.enum([
-    "reflect",
+    "think",
     "completed",
   ]),
 });
@@ -34,7 +34,8 @@ export function createAgentStepExecutor(
 
     const lastMessage = state.messages.at(-1);
 
-    if (lastMessage instanceof ToolMessage) {
+    if (!(lastMessage instanceof ToolMessage)) {
+      
       const toolResponse = await toolLLM.invoke(state.messages);
 
       if (toolResponse.tool_calls?.length) {
@@ -48,10 +49,11 @@ export function createAgentStepExecutor(
         }
       }
 
+    } else {
+      state.lastObservedStep = state.step;
     }
 
     const routingDecision = await decisionLLM.invoke([
-      ...state.messages,
       new SystemMessage(`
         You are a decision making agent responsible for routing the next step within a resoning system.
 
@@ -61,8 +63,13 @@ export function createAgentStepExecutor(
         ${JSON.stringify(AgentDecisionSchema.toJSONSchema())}
 
         DO NOT include natural language outside the defined schemaJSON.
+
         The reasoning field should be a short message justifying the next step and what it should accomplish.
-      `)
+
+        If thinking has already occurred multiple times and no new insights are emerging,
+        you MUST choose "completed" and allow the system to answer.
+      `),
+      ...state.messages,
     ], );
 
     return {
@@ -77,8 +84,8 @@ export function createAgentStepExecutor(
 export function CreateLLMNode(llm: ChatOpenAI, systemMessage: SystemMessage | undefined = undefined) {
   return async function llmNode(state: GraphState) {
     const response = await llm.invoke([
+      ...(systemMessage ? [systemMessage] : []),
       ...state.messages,
-      ...(systemMessage ? [systemMessage] : [])
     ]);
 
     return {

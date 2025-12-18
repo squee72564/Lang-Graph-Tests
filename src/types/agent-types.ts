@@ -23,8 +23,10 @@ export type AgentState = {
 
   decision?: {
     reason?: string,
-    action: "tool_use" | "reflect" | "completed",
+    action: "tool_use" | "think" | "completed",
   } | undefined,
+
+  lastObservedStep: number;
 
   toolHistory: ToolInvocation[],
 
