@@ -15,7 +15,7 @@ export function makeToolRouter({self, tools}: {self: string, tools: string}) {
       typeof last.content === "string" &&
       last.content.startsWith("FINAL:")
     ) {
-      last.content.replace(/^FINAL:\s*/, "");
+      last.content = last.content.replace(/^FINAL:\s*/, "");
       return END;
     }
 
@@ -24,5 +24,26 @@ export function makeToolRouter({self, tools}: {self: string, tools: string}) {
     }
 
     return self;
+  }
+}
+
+export function makeRouter({
+  self,
+  next = END,
+  tools,
+  end = END
+}: {
+  self: string,
+  next: string,
+  tools: string,
+  end: string
+}) {
+  return function route(state: GraphState) {
+    const last = state.messages.at(-1);
+
+    if (last instanceof AIMessage && last.tool_calls && last.tool_calls?.length > 0) {
+      return tools;
+    }
+
   }
 }
