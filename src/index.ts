@@ -18,24 +18,18 @@ import {
   fetchWeatherTool,
 } from "./tools/examples/mock-db.js";
 
-const executionLLM = createLLM({
+const llm = createLLM({
   provider: "Anthropic",
   model: "anthropic/claude-3-haiku",
   temperature: 0.2,
 });
 
-const reasoningLLM = createLLM({
-  provider: "OpenAI",
-  model: "openai/gpt-4o-mini",
-  temperature: 0.5,
-});
-
 const researchAgent = createAgentSubgraph({
-  llm: executionLLM,
-  planningLLM: reasoningLLM,
-  toolCallerLLM: executionLLM,
-  reasoningLLM: reasoningLLM,
-  answerLLM: reasoningLLM,
+  llm: llm,
+  planningLLM: llm,
+  toolCallerLLM: llm,
+  reasoningLLM: llm,
+  answerLLM: llm,
   tools: [fetchUserProfileTool, fetchCatalogTool, fetchWeatherTool],
   nodePrefix: "research",
   toolCallerSystemPrompt: `
@@ -56,11 +50,11 @@ const researchAgent = createAgentSubgraph({
 });
 
 const analysisAgent = createAgentSubgraph({
-  llm: executionLLM,
-  planningLLM: reasoningLLM,
-  toolCallerLLM: executionLLM,
-  reasoningLLM: reasoningLLM,
-  answerLLM: reasoningLLM,
+  llm: llm,
+  planningLLM: llm,
+  toolCallerLLM: llm,
+  reasoningLLM: llm,
+  answerLLM: llm,
   tools: [sumTool, prodTool, estimateShippingTool],
   nodePrefix: "analysis",
   toolCallerSystemPrompt: `
@@ -235,7 +229,7 @@ const runFinal = async (state: typeof WorkflowStateAnnotation.State) => {
     Use ONLY the data in the summaries. Do not invent products or prices.
   `;
 
-  const response = await reasoningLLM.invoke([new HumanMessage(finalPrompt)]);
+  const response = await llm.invoke([new HumanMessage(finalPrompt)]);
   return {
     messages: [response],
   };
