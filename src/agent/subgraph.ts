@@ -27,12 +27,6 @@ const DEFAULT_ANSWER_PROMPT = `
   Do NOT defer further thinking.
 `;
 
-const DEFAULT_ROUTER_LLM_CONFIG = {
-  provider: "openrouter",
-  model: "anthropic/claude-3-haiku",
-  temperature: 0.2
-} as LLMConfig;
-
 type AgentSubgraphOptions = {
   llm?: ChatOpenAI;
   llmConfig?: LLMConfig;
