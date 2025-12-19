@@ -1,59 +1,61 @@
-import { StateGraph, START } from "@langchain/langgraph";
-import { AgentStateAnnotation, type GraphState } from "./lib/agent-state.js";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { makeToolRouter } from "./nodes/routers.js";
-import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { addTool } from "./tools/examples/addition-tool.js"
-import { createLLMNode } from "./lib/llm-node.js";
-import { createLLM } from "./lib/llm-factory.js";
-import { saveGraphToPng } from "./lib/utils.js";
+import { sumTool } from "./tools/examples/addition-tool.js";
+import { prodTool } from "./tools/examples/product-tool.js";
+import { createAgentSubgraph } from "./agent/subgraph.js";
+import { createLLM } from "./runtime/llm-integration-factory.js";
+import { formatStreamChunk, saveGraphToPng } from "./lib/utils.js";
 
 const llm = createLLM({
   provider: "openrouter",
   model: "anthropic/claude-3-haiku",
-  temperature: 0,
+  temperature: 0.2,
 });
 
-const llmNode = createLLMNode(llm, {
-  tools: [addTool],
+const thinkingLLM = createLLM({
+  provider: "openrouter",
+  model: "anthropic/claude-3.5-sonnet",
+  temperature: 0.5,
 });
 
-
-const graph = new StateGraph(AgentStateAnnotation);
-
-const compiledGraph = graph
-  .addNode("llm", llmNode)
-  .addNode("tools", new ToolNode([addTool]))
-
-  // control flow
-  .addEdge(START, "llm")
-  .addConditionalEdges(
-    "llm",
-    makeToolRouter({ self: "llm", tools: "tools" })
-  )
-  .addEdge("tools", "llm")
-  .compile();
-
-const result = await compiledGraph.invoke({
-  agentId: "agent-1",
-  runId: "run-1",
-  startedAt: Date.now(),
-  messages: [
-    new SystemMessage(
-      "You may call tools if needed. " +
-      "When you are finished, respond with 'FINAL: <answer>' and do not continue."
-    ),
-    new HumanMessage("What is 2 + 2")
-  ],
-  objective: "Answer the math question",
-  step: 0,
-  maxSteps: 5,
-  toolHistory: [],
-  errors: [],
+const compiledGraph = createAgentSubgraph({
+  llm: llm,
+  planningLLM: thinkingLLM,
+  answerLLM: thinkingLLM,
+  tools: [sumTool, prodTool],
+  nodePrefix: "test-agent",
 });
-
-console.log(result);
-console.log(result.messages.map(m => m.content));
 
 const graphData = await compiledGraph.getGraphAsync();
 await saveGraphToPng(graphData, "./graph.png");
+
+let i = 0;
+for await (const chunk of await compiledGraph.stream(
+  {
+    agentId: "agent-1",
+    runId: "run-1",
+    startedAt: Date.now(),
+    messages: [
+      new SystemMessage(`
+        You are an expert agent system composed of mutiple experts that is given a prompt.
+        You goal is to answer the prompt sufficiently using reasoning or available tool calls.
+
+        Rules:
+        - If you receive a tool result that answers the question or sufficient general knowledge that answers the question, you MUST choose action "completed".
+        - Include the final answer only in your response.
+        - Use "plan" only if further planning is required.
+      `),
+      new HumanMessage("What is 1231 + 231324 * 23 - 2332 - 1 + 2"),
+    ],
+    objective: "Answer the math question",
+    step: 0,
+    maxSteps: 50,
+    toolHistory: [],
+    errors: [],
+  },
+  {
+    recursionLimit: 20,
+  },
+)) {
+  console.log(`=== GRAPH STEP ${i++} ===`);
+  console.dir(formatStreamChunk(chunk), { depth: null });
+}

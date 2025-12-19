@@ -1,5 +1,5 @@
 import { END } from "@langchain/langgraph";
-import type { GraphState } from "../lib/agent-state.js";
+import type { GraphState } from "../agent/state.js";
 
 export function makeAgentLoopRouter({
   planning,

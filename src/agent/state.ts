@@ -1,4 +1,4 @@
-import { Annotation, type StateType } from "@langchain/langgraph";
+import { Annotation } from "@langchain/langgraph";
 import { BaseMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types/agent-types.js";
 
@@ -37,6 +37,16 @@ export const AgentStateAnnotation = Annotation.Root({
   maxSteps: Annotation<number>({
     reducer: (_, b) => b,
     default: () => 10,
+  }),
+
+  decision: Annotation<AgentState["decision"]>({
+    reducer: (_, b) => b,
+    default: () => undefined,
+  }),
+
+  lastObservedStep: Annotation<number>({
+    reducer: (_, b) => b,
+    default: () => 0,
   }),
 
   toolHistory: Annotation<AgentState["toolHistory"]>({
