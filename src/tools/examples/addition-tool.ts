@@ -1,5 +1,5 @@
 import z from "zod";
-import type { AgentTool } from "../../types/agent-types.js";
+import type { AgentTool } from "../../agent/types.js";
 import { adaptAgentTool } from "../tool-adapter.js";
 
 const sumRuntimeTool: AgentTool<{ nums: number[] }, number> = {
