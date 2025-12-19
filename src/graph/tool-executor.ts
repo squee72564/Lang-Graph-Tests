@@ -47,9 +47,7 @@ function buildToolHistory(
   finishedAt: number,
 ): ToolInvocation[] {
   return toolCalls.map((call) => {
-    const toolMessage = toolMessages.find(
-      (message) => message.tool_call_id === call.id
-    );
+    const toolMessage = toolMessages.find((message) => message.tool_call_id === call.id);
     const result = coerceToolResult(toolMessage);
 
     return {
@@ -77,14 +75,15 @@ export function createToolExecutorNode(tools: StructuredTool[]) {
       const finishedAt = Date.now();
 
       const toolMessages = (result.messages ?? []).filter(
-        (message: ToolMessage | AIMessage | UserMessage | SystemMessage ): message is ToolMessage => message instanceof ToolMessage
+        (message: ToolMessage | AIMessage | UserMessage | SystemMessage): message is ToolMessage =>
+          message instanceof ToolMessage,
       );
 
       const lastToolCallMessage = [...state.messages]
         .reverse()
         .find(
           (message): message is AIMessage =>
-            message instanceof AIMessage && !!message.tool_calls?.length
+            message instanceof AIMessage && !!message.tool_calls?.length,
         );
 
       const toolCalls = (lastToolCallMessage?.tool_calls ?? []) as ToolCall[];

@@ -14,7 +14,7 @@ const PlanSchema = z.object({
         status: z.enum(["pending", "done", "failed"]).default("pending"),
         expectedOutcome: z.string().optional(),
         toolHint: z.string().optional(),
-      })
+      }),
     )
     .min(1),
 });
@@ -29,7 +29,7 @@ export function createPlanNode(llm: ChatOpenAI, systemPrompt?: string) {
           You are a planning module.
           Produce a lightweight, actionable plan with 2–4 steps.
           Each step should be concrete and align with the objective.
-        `
+        `,
     );
 
     try {

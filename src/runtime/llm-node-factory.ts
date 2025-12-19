@@ -9,11 +9,7 @@ export function CreateLLMNode(
   systemMessage: SystemMessage | undefined = undefined,
 ) {
   return async function llmNode(state: GraphState) {
-
-    const context = [
-      ...(systemMessage ? [systemMessage] : []),
-      ...state.messages,
-    ];
+    const context = [...(systemMessage ? [systemMessage] : []), ...state.messages];
 
     let response: AIMessage;
     try {
@@ -35,6 +31,6 @@ export function CreateLLMNode(
       step: state.step + 1,
       lastObservedStep: state.step + 1,
       totalTokens: getTotalTokens(response),
-    }
-  }
+    };
+  };
 }

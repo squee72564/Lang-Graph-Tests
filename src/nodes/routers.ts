@@ -5,12 +5,12 @@ export function makeAgentLoopRouter({
   planning,
   next = END,
   tools,
-  end = END
+  end = END,
 }: {
-  planning: string,
-  next: string,
-  tools: string,
-  end: string
+  planning: string;
+  next: string;
+  tools: string;
+  end: string;
 }) {
   return function route(state: GraphState) {
     const agentDecision = state.decision;
@@ -35,5 +35,5 @@ export function makeAgentLoopRouter({
       default:
         throw Error(`Unsupported agent decision: ${agentDecision.action}`);
     }
-  }
-} 
+  };
+}

@@ -5,7 +5,7 @@ import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 export async function saveGraphToPng(graph: Graph, filePath: string) {
   const pngBlob = await graph.drawMermaidPng();
   const buffer = Buffer.from(await pngBlob.arrayBuffer());
-  
+
   fs.writeFileSync(filePath, buffer);
 }
 
@@ -71,9 +71,11 @@ export function formatStreamChunk(chunk: Record<string, unknown>) {
 }
 
 export function getTotalTokens(message: AIMessage): number {
-  const responseMetadata = message.response_metadata as {
-    tokenUsage?: { totalTokens?: number };
-  } | undefined;
+  const responseMetadata = message.response_metadata as
+    | {
+        tokenUsage?: { totalTokens?: number };
+      }
+    | undefined;
 
   if (responseMetadata?.tokenUsage?.totalTokens) {
     return responseMetadata.tokenUsage.totalTokens;
@@ -84,4 +86,3 @@ export function getTotalTokens(message: AIMessage): number {
 
   return usageMetadata?.total_tokens ?? 0;
 }
-

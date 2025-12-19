@@ -25,10 +25,9 @@ const routeDecisionTool = tool(
   },
   {
     name: ROUTE_DECISION_TOOL_NAME,
-    description:
-      "Choose the next non-tool action when no tool call is needed.",
+    description: "Choose the next non-tool action when no tool call is needed.",
     schema: RouteDecisionSchema,
-  }
+  },
 );
 
 function coerceToolArgs(args: unknown): unknown {
@@ -49,19 +48,13 @@ function formatPlanForPrompt(plan: GraphState["plan"] | undefined): string {
   }
 
   const steps = plan.steps
-    .map(
-      (step, index) =>
-        `${index + 1}. ${step.description} (status: ${step.status})`
-    )
+    .map((step, index) => `${index + 1}. ${step.description} (status: ${step.status})`)
     .join("\n");
 
   return `Current plan:\n${steps}`;
 }
 
-export function createAgentStepExecutor(
-  llm: ChatOpenAI,
-  options: LLMNodeOptions = {},
-) {
+export function createAgentStepExecutor(llm: ChatOpenAI, options: LLMNodeOptions = {}) {
   const { tools = [], toolChoice = "required", stepSystemPrompt } = options;
 
   const toolLLM = llm.bindTools([routeDecisionTool, ...tools], {
@@ -94,10 +87,7 @@ export function createAgentStepExecutor(
 
     let toolResponse: AIMessage;
     try {
-      toolResponse = await toolLLM.invoke([
-        stepSystemMessage,
-        ...state.messages,
-      ]);
+      toolResponse = await toolLLM.invoke([stepSystemMessage, ...state.messages]);
     } catch (error) {
       return {
         errors: [
@@ -128,34 +118,26 @@ export function createAgentStepExecutor(
       };
     }
 
-    const routeCall = toolCalls.find(
-      (call) => call.name === ROUTE_DECISION_TOOL_NAME
-    );
+    const routeCall = toolCalls.find((call) => call.name === ROUTE_DECISION_TOOL_NAME);
 
     if (routeCall) {
-      const parsed = RouteDecisionSchema.safeParse(
-        coerceToolArgs(routeCall.args)
-      );
+      const parsed = RouteDecisionSchema.safeParse(coerceToolArgs(routeCall.args));
       return {
         step: state.step + 1,
         lastObservedStep: state.step + 1,
         totalTokens: getTotalTokens(toolResponse),
         decision: {
-          reason: parsed.success ? parsed.data.reason ?? "" : "",
+          reason: parsed.success ? (parsed.data.reason ?? "") : "",
           action: parsed.success ? parsed.data.action : "plan",
         },
       };
     }
 
     const toolReason =
-      typeof toolResponse.content === "string" &&
-      toolResponse.content.trim().length > 0
+      typeof toolResponse.content === "string" && toolResponse.content.trim().length > 0
         ? toolResponse.content
         : `Tool calls requested: ${toolCalls
-            .map(
-              (call) =>
-                `${call.name ?? "unknown"} ${JSON.stringify(call.args ?? {})}`
-            )
+            .map((call) => `${call.name ?? "unknown"} ${JSON.stringify(call.args ?? {})}`)
             .join("; ")}`;
 
     return {
@@ -168,6 +150,5 @@ export function createAgentStepExecutor(
       lastObservedStep: state.step + 1,
       totalTokens: getTotalTokens(toolResponse),
     };
-
   };
 }

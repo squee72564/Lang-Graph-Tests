@@ -64,19 +64,10 @@ function resolveLLM(
 export function createAgentSubgraph(options: AgentSubgraphOptions) {
   const tools = options.tools ?? options.stepExecutorOptions?.tools ?? [];
   const llm = resolveLLM(options.llm, options.llmConfig, undefined);
-  const planningLLM = resolveLLM(
-    options.planningLLM,
-    options.planningLLMConfig,
-    llm 
-  );
-  const answerLLM = resolveLLM(
-    options.answerLLM,
-    options.answerLLMConfig,
-    llm
-  );
+  const planningLLM = resolveLLM(options.planningLLM, options.planningLLMConfig, llm);
+  const answerLLM = resolveLLM(options.answerLLM, options.answerLLMConfig, llm);
 
-  const nodeId = (name: string) =>
-    options.nodePrefix ? `${options.nodePrefix}.${name}` : name;
+  const nodeId = (name: string) => (options.nodePrefix ? `${options.nodePrefix}.${name}` : name);
 
   const stepExecutor = createAgentStepExecutor(llm, {
     ...options.stepExecutorOptions,
@@ -85,12 +76,12 @@ export function createAgentSubgraph(options: AgentSubgraphOptions) {
 
   const planningNode = createPlanNode(
     planningLLM,
-    options.planningSystemPrompt ?? DEFAULT_PLANNING_PROMPT
+    options.planningSystemPrompt ?? DEFAULT_PLANNING_PROMPT,
   );
 
   const finalAnswerNode = CreateLLMNode(
     answerLLM,
-    new SystemMessage(options.answerSystemPrompt ?? DEFAULT_ANSWER_PROMPT)
+    new SystemMessage(options.answerSystemPrompt ?? DEFAULT_ANSWER_PROMPT),
   );
 
   const graph = new StateGraph(AgentStateAnnotation);
@@ -101,14 +92,12 @@ export function createAgentSubgraph(options: AgentSubgraphOptions) {
     .addNode(nodeId("planning"), planningNode)
     .addNode(nodeId("answer"), finalAnswerNode)
     .addEdge(START, nodeId("stepExecutor"))
-    .addConditionalEdges(
-      nodeId("stepExecutor"),
-      (state) =>
-        state.decision?.action === "tool_use"
-          ? nodeId("tools")
-          : state.decision?.action === "plan"
-            ? nodeId("planning")
-            : nodeId("answer")
+    .addConditionalEdges(nodeId("stepExecutor"), (state) =>
+      state.decision?.action === "tool_use"
+        ? nodeId("tools")
+        : state.decision?.action === "plan"
+          ? nodeId("planning")
+          : nodeId("answer"),
     )
     .addEdge(nodeId("tools"), nodeId("stepExecutor"))
     .addEdge(nodeId("planning"), nodeId("stepExecutor"))

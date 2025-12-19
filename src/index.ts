@@ -1,6 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { sumTool } from "./tools/examples/addition-tool.js"
-import { prodTool } from "./tools/examples/product-tool.js"
+import { sumTool } from "./tools/examples/addition-tool.js";
+import { prodTool } from "./tools/examples/product-tool.js";
 import { createAgentSubgraph } from "./agent/subgraph.js";
 import { createLLM } from "./runtime/llm-integration-factory.js";
 import { formatStreamChunk, saveGraphToPng } from "./lib/utils.js";
@@ -14,7 +14,7 @@ const llm = createLLM({
 const thinkingLLM = createLLM({
   provider: "openrouter",
   model: "anthropic/claude-3.5-sonnet",
-  temperature: 0.5
+  temperature: 0.5,
 });
 
 const compiledGraph = createAgentSubgraph({
@@ -22,7 +22,7 @@ const compiledGraph = createAgentSubgraph({
   planningLLM: thinkingLLM,
   answerLLM: thinkingLLM,
   tools: [sumTool, prodTool],
-  nodePrefix: "test-agent"
+  nodePrefix: "test-agent",
 });
 
 const graphData = await compiledGraph.getGraphAsync();
@@ -54,7 +54,7 @@ for await (const chunk of await compiledGraph.stream(
   },
   {
     recursionLimit: 20,
-  }
+  },
 )) {
   console.log(`=== GRAPH STEP ${i++} ===`);
   console.dir(formatStreamChunk(chunk), { depth: null });
