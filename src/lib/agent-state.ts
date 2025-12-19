@@ -1,4 +1,4 @@
-import { Annotation, type StateType } from "@langchain/langgraph";
+import { Annotation } from "@langchain/langgraph";
 import { BaseMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types/agent-types.js";
 

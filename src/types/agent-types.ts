@@ -11,10 +11,14 @@ export type AgentState = {
   objective: string,
 
   plan?: {
+    goal: string,
+    updatedAt: number,
     steps: {
       id: string,
       description: string,
       status: "pending" | "done" | "failed",
+      expectedOutcome?: string,
+      toolHint?: string,
     }[],
   },
 
@@ -23,7 +27,7 @@ export type AgentState = {
 
   decision?: {
     reason?: string,
-    action: "tool_use" | "think" | "completed",
+    action: "tool_use" | "plan" | "completed",
   } | undefined,
 
   lastObservedStep: number;
