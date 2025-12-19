@@ -1,9 +1,10 @@
 import { AIMessage, SystemMessage } from "@langchain/core/messages";
-import type { GraphState } from "../lib/agent-state.js";
+import type { GraphState } from "./state.js";
 import { tool, type StructuredTool } from "@langchain/core/tools";
 import type { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 import { AgentErrorKind } from "../types/agent-types.js";
+import { getTotalTokens } from "../lib/utils.js";
 
 type LLMNodeOptions = {
   tools?: StructuredTool[] | undefined;
@@ -12,21 +13,6 @@ type LLMNodeOptions = {
 };
 
 const ROUTE_DECISION_TOOL_NAME = "route_decision";
-
-const PlanSchema = z.object({
-  goal: z.string(),
-  steps: z
-    .array(
-      z.object({
-        id: z.string(),
-        description: z.string(),
-        status: z.enum(["pending", "done", "failed"]).default("pending"),
-        expectedOutcome: z.string().optional(),
-        toolHint: z.string().optional(),
-      })
-    )
-    .min(1),
-});
 
 const RouteDecisionSchema = z.object({
   reason: z.string().optional(),
@@ -55,21 +41,6 @@ function coerceToolArgs(args: unknown): unknown {
   }
 
   return args ?? {};
-}
-
-function getTotalTokens(message: AIMessage): number {
-  const responseMetadata = message.response_metadata as {
-    tokenUsage?: { totalTokens?: number };
-  } | undefined;
-
-  if (responseMetadata?.tokenUsage?.totalTokens) {
-    return responseMetadata.tokenUsage.totalTokens;
-  }
-
-  const usageMetadata = (message as unknown as { usage_metadata?: { total_tokens?: number } })
-    .usage_metadata;
-
-  return usageMetadata?.total_tokens ?? 0;
 }
 
 function formatPlanForPrompt(plan: GraphState["plan"] | undefined): string {
@@ -198,90 +169,5 @@ export function createAgentStepExecutor(
       totalTokens: getTotalTokens(toolResponse),
     };
 
-  };
-}
-
-export function CreateLLMNode(
-  llm: ChatOpenAI,
-  systemMessage: SystemMessage | undefined = undefined,
-) {
-  return async function llmNode(state: GraphState) {
-
-    const context = [
-      ...(systemMessage ? [systemMessage] : []),
-      ...state.messages,
-    ];
-
-    let response: AIMessage;
-    try {
-      response = await llm.invoke(context);
-    } catch (error) {
-      return {
-        errors: [
-          {
-            kind: AgentErrorKind.MODEL,
-            message: String(error),
-            recoverable: true,
-          },
-        ],
-      };
-    }
-
-    return {
-      messages: [response],
-      step: state.step + 1,
-      lastObservedStep: state.step + 1,
-      totalTokens: getTotalTokens(response),
-    }
-  }
-}
-
-export function createPlanNode(llm: ChatOpenAI, systemPrompt?: string) {
-  const plannerLLM = llm.withStructuredOutput(PlanSchema);
-
-  return async function planNode(state: GraphState) {
-    const planSystemMessage = new SystemMessage(
-      systemPrompt ??
-        `
-          You are a planning module.
-          Produce a lightweight, actionable plan with 2–4 steps.
-          Each step should be concrete and align with the objective.
-        `
-    );
-
-    try {
-      const plan = await plannerLLM.invoke([
-        planSystemMessage,
-        new SystemMessage(`Objective: ${state.objective}`),
-        ...state.messages,
-      ]);
-
-      return {
-        plan: {
-          goal: plan.goal,
-          steps: plan.steps.map((step) => ({
-            ...step,
-            status: step.status ?? "pending",
-          })),
-          updatedAt: Date.now(),
-        },
-        lastObservedStep: state.step + 1,
-        step: state.step + 1,
-      };
-    } catch (error) {
-      return {
-        errors: [
-          {
-            kind: AgentErrorKind.MODEL,
-            message: String(error),
-            recoverable: true,
-          },
-        ],
-        decision: {
-          reason: "Planning failed; defaulting to completed.",
-          action: "completed",
-        },
-      };
-    }
   };
 }

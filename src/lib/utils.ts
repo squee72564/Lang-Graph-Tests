@@ -69,3 +69,19 @@ export function formatStreamChunk(chunk: Record<string, unknown>) {
 
   return formatted;
 }
+
+export function getTotalTokens(message: AIMessage): number {
+  const responseMetadata = message.response_metadata as {
+    tokenUsage?: { totalTokens?: number };
+  } | undefined;
+
+  if (responseMetadata?.tokenUsage?.totalTokens) {
+    return responseMetadata.tokenUsage.totalTokens;
+  }
+
+  const usageMetadata = (message as unknown as { usage_metadata?: { total_tokens?: number } })
+    .usage_metadata;
+
+  return usageMetadata?.total_tokens ?? 0;
+}
+

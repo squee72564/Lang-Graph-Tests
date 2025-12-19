@@ -1,8 +1,8 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { sumTool } from "./tools/examples/addition-tool.js"
 import { prodTool } from "./tools/examples/product-tool.js"
-import { createAgentSubgraph } from "./lib/agent-subgraph.js";
-import { createLLM } from "./lib/llm-factory.js";
+import { createAgentSubgraph } from "./agent/subgraph.js";
+import { createLLM } from "./runtime/llm-integration-factory.js";
 import { formatStreamChunk, saveGraphToPng } from "./lib/utils.js";
 
 const llm = createLLM({
