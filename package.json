@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm exec tsx ./src/index.ts",
-    "lint": "pnpm exec eslint ./src/"
+    "lint": "pnpm exec eslint ./src/",
+    "format": "pnpm exec prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
     "jiti": "^2.6.1",
+    "prettier": "^3.7.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.0"
