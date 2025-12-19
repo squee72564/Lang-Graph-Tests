@@ -44,10 +44,10 @@ export function createReasoningNode(llm: ChatOpenAI, systemPrompt?: string) {
       );
       const reasoning = result.parsed;
 
-      const guardLoop = reasoning.action === "tool_use" && state.noToolStreak >= 3;
+      const guardLoop = reasoning.action === "tool_use" && state.noToolStreak >= 1;
       const nextAction = guardLoop ? "completed" : reasoning.action;
       const nextReason = guardLoop
-        ? "No tool call emitted on the 3 previous step; completing to avoid a loop."
+        ? "No tool call emitted on the previous step; completing to avoid a loop."
         : (reasoning.reason ?? reasoning.summary);
 
       return {
