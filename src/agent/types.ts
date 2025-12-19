@@ -1,5 +1,4 @@
 import { BaseMessage } from "@langchain/core/messages";
-import type { ZodType } from "zod";
 
 export type AgentState = {
   agentId: string;
@@ -60,13 +59,6 @@ export type ToolResult<T> =
       error: { code: string; message: string; recoverable: boolean };
       metadata?: { durationMs: number; tokensUsed?: number };
     };
-
-export type AgentTool<I, O> = {
-  name: string;
-  description: string;
-  inputSchema: ZodType;
-  execute(input: I): Promise<ToolResult<O>>;
-};
 
 export enum AgentErrorKind {
   MODEL,

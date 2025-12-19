@@ -1,31 +1,13 @@
+import { tool } from "@langchain/core/tools";
 import z from "zod";
-import type { AgentTool } from "../../agent/types.js";
-import { adaptAgentTool } from "../tool-adapter.js";
 
-const sumRuntimeTool: AgentTool<{ nums: number[] }, number> = {
-  name: "sum",
-  description: "Sum an array of numbers",
-  inputSchema: z.object({ nums: z.array(z.number()) }),
-  async execute(input) {
-    const start = Date.now();
-    try {
-      const result = input.nums.reduce((accum, curr) => accum + curr, 0);
-      return {
-        ok: true,
-        data: result,
-        metadata: { durationMs: Date.now() - start },
-      };
-    } catch (e) {
-      return {
-        ok: false,
-        error: {
-          code: "SUM_FAILED",
-          message: String(e),
-          recoverable: false,
-        },
-      };
-    }
+export const sumTool = tool(
+  async (input: { nums: number[] }) => {
+    return input.nums.reduce((accum, curr) => accum + curr, 0);
   },
-};
-
-export const sumTool = adaptAgentTool(sumRuntimeTool);
+  {
+    name: "sum",
+    description: "Sum an array of numbers",
+    schema: z.object({ nums: z.array(z.number()) }),
+  },
+);
