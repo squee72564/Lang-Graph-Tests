@@ -1,6 +1,6 @@
 import { Annotation } from "@langchain/langgraph";
 import { BaseMessage } from "@langchain/core/messages";
-import type { AgentState } from "../types/agent-types.js";
+import type { AgentState } from "./types.js";
 
 export const AgentStateAnnotation = Annotation.Root({
   agentId: Annotation<string>({
@@ -59,9 +59,19 @@ export const AgentStateAnnotation = Annotation.Root({
     default: () => 0,
   }),
 
+  noToolStreak: Annotation<AgentState["noToolStreak"]>({
+    reducer: (_, b) => b,
+    default: () => 0,
+  }),
+
   errors: Annotation<AgentState["errors"]>({
     reducer: (a, b) => a.concat(b),
     default: () => [],
+  }),
+
+  reasoningSummary: Annotation<AgentState["reasoningSummary"]>({
+    reducer: (_, b) => b,
+    default: () => undefined,
   }),
 });
 

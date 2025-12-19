@@ -14,9 +14,8 @@ export type AgentState = {
     goal: string;
     updatedAt: number;
     steps: {
-      id: string;
       description: string;
-      status: "pending" | "done" | "failed";
+      status: "pending" | "completed" | "failed";
       expectedOutcome?: string;
       toolHint?: string;
     }[];
@@ -28,7 +27,7 @@ export type AgentState = {
   decision?:
     | {
         reason?: string;
-        action: "tool_use" | "plan" | "completed";
+        action: "tool_use" | "no_tool" | "completed";
       }
     | undefined;
 
@@ -38,7 +37,11 @@ export type AgentState = {
 
   totalTokens: number;
 
+  noToolStreak: number;
+
   errors: AgentError[];
+
+  reasoningSummary?: string;
 };
 
 export type ToolInvocation = {

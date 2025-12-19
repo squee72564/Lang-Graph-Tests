@@ -2,7 +2,7 @@ import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 import type { StructuredTool } from "@langchain/core/tools";
 import type { GraphState } from "../agent/state.js";
-import { AgentErrorKind, type ToolInvocation } from "../types/agent-types.js";
+import { AgentErrorKind, type ToolInvocation } from "../agent/types.js";
 import type { UserMessage } from "@openrouter/sdk/models";
 
 type ToolCall = {
