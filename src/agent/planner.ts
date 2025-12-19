@@ -1,55 +1,84 @@
-import { SystemMessage } from "@langchain/core/messages";
 import type { GraphState } from "./state.js";
 import type { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
-import { AgentErrorKind } from "../types/agent-types.js";
+import { AgentErrorKind } from "./types.js";
+import { AIMessage } from "@langchain/core/messages";
+import { getTotalTokens, withSystemPrompt } from "../lib/utils.js";
 
 const PlanSchema = z.object({
   goal: z.string(),
-  steps: z
-    .array(
-      z.object({
-        id: z.string(),
-        description: z.string(),
-        status: z.enum(["pending", "done", "failed"]).default("pending"),
-        expectedOutcome: z.string().optional(),
-        toolHint: z.string().optional(),
-      }),
-    )
-    .min(1),
+  steps: z.array(
+    z.object({
+      description: z.string(),
+      status: z.enum(["pending", "completed", "failed"]),
+      toolHint: z.string().nullable(),
+    }),
+  ),
 });
 
-export function createPlanNode(llm: ChatOpenAI, systemPrompt?: string) {
-  const plannerLLM = llm.withStructuredOutput(PlanSchema);
+type PlanNodeOptions = {
+  systemPrompt?: string;
+  toolCatalog?: string;
+};
+
+export function createPlanNode(llm: ChatOpenAI, options: PlanNodeOptions = {}) {
+  const { systemPrompt, toolCatalog } = options;
+  const plannerLLM = llm.withStructuredOutput(PlanSchema, {
+    name: "plan",
+    method: "functionCalling",
+    includeRaw: true,
+  });
 
   return async function planNode(state: GraphState) {
-    const planSystemMessage = new SystemMessage(
+    const planSystemPrompt =
       systemPrompt ??
-        `
-          You are a planning module.
-          Produce a lightweight, actionable plan with 2–4 steps.
-          Each step should be concrete and align with the objective.
-        `,
-    );
+      `
+        You are a planning module.
+        Produce a lightweight, actionable plan with 2–4 steps.
+        Each step should be concrete and align with the objective.
+        Each step should include a short tool hint when relevant.
+        Set every step status to "pending" when the plan is first created.
+
+        Return ONLY valid JSON matching this shape:
+
+        {
+          "goal": string,
+          "steps": Array<{
+            "description": string,
+            "status": "pending" | "completed" | "failed",
+            "toolHint": string
+          }>
+        }
+        No prose. No markdown.
+      `;
+
+    const toolCatalogText = toolCatalog ? `\n\nAvailable tools:\n${toolCatalog}` : "";
 
     try {
-      const plan = await plannerLLM.invoke([
-        planSystemMessage,
-        new SystemMessage(`Objective: ${state.objective}`),
-        ...state.messages,
-      ]);
+      const result = await plannerLLM.invoke(
+        withSystemPrompt(
+          state.messages,
+          `${planSystemPrompt}${toolCatalogText}\n\nObjective: ${state.objective}`,
+        ),
+      );
+      const plan = result.parsed;
 
       return {
+        messages: [
+          new AIMessage(`Plan created: ${plan.steps.map((step) => step.description).join(" | ")}`),
+        ],
         plan: {
           goal: plan.goal,
           steps: plan.steps.map((step) => ({
-            ...step,
-            status: step.status ?? "pending",
+            description: step.description,
+            status: step.status,
+            toolHint: step.toolHint,
           })),
           updatedAt: Date.now(),
         },
         lastObservedStep: state.step + 1,
         step: state.step + 1,
+        totalTokens: getTotalTokens(result.raw),
       };
     } catch (error) {
       return {
