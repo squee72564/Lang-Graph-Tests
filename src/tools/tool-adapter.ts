@@ -10,32 +10,7 @@ export function adaptAgentTool<I, O>(agentTool: AgentTool<I, O>) {
     );
   }
 
-  const shape = agentTool.inputSchema.shape;
-
-  const properties: Record<string, any> = {};
-  const required: string[] = [];
-
-  for (const [key, schema] of Object.entries(shape)) {
-    required.push(key);
-
-    if (schema instanceof z.ZodNumber) {
-      properties[key] = { type: "number" };
-    } else if (schema instanceof z.ZodString) {
-      properties[key] = { type: "string" };
-    } else if (schema instanceof z.ZodBoolean) {
-      properties[key] = { type: "boolean" };
-    } else {
-      throw new Error(
-        `Unsupported Zod type for tool "${agentTool.name}" property "${key}"`
-      );
-    }
-  }
-
-  const openAiSchema = {
-    type: "object" as const,
-    properties,
-    required,
-  };
+  const schema = agentTool.inputSchema as z.ZodType;
 
   return tool(
     async (input: unknown) => {
@@ -56,7 +31,7 @@ export function adaptAgentTool<I, O>(agentTool: AgentTool<I, O>) {
     {
       name: agentTool.name,
       description: agentTool.description,
-      schema: openAiSchema,
+      schema,
     }
   );
 }
