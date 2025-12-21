@@ -2,7 +2,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { Config } from "./config.js";
 
 export type LLMConfig = {
-  provider: "Anthropic" | "OpenAI" | "Other";
+  provider: "OpenRouter";
   model: string;
   temperature?: number;
   toolChoice?: "auto" | "required";
@@ -10,21 +10,7 @@ export type LLMConfig = {
 
 export function createLLM(config: LLMConfig) {
   switch (config.provider) {
-    case "Anthropic":
-      return new ChatOpenAI({
-        model: config.model,
-        apiKey: Config.getOpenRouterApiKey(),
-        temperature: config.temperature ?? 0,
-
-        configuration: {
-          baseURL: "https://openrouter.ai/api/v1",
-          defaultHeaders: {
-            "HTTP-Referer": Config.getSiteName() ?? "",
-            "X-Title": Config.getSiteName() ?? "",
-          },
-        },
-      });
-    case "OpenAI":
+    case "OpenRouter":
       return new ChatOpenAI({
         model: config.model,
         apiKey: Config.getOpenRouterApiKey(),

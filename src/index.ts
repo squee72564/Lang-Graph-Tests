@@ -19,7 +19,7 @@ import {
 } from "./tools/examples/mock-db.js";
 
 const llm = createLLM({
-  provider: "Anthropic",
+  provider: "OpenRouter",
   model: "anthropic/claude-3-haiku",
   temperature: 0.2,
 });
@@ -245,17 +245,21 @@ const workflow = new StateGraph(WorkflowStateAnnotation)
   .addEdge("final", END)
   .compile();
 
-const [workflowData, researchAgentData, analysisAgentData] = await Promise.all([
-  workflow.getGraphAsync(),
-  researchAgent.getGraphAsync(),
-  analysisAgent.getGraphAsync(),
-]);
+try {
+  const [workflowData, researchAgentData, analysisAgentData] = await Promise.all([
+    workflow.getGraphAsync(),
+    researchAgent.getGraphAsync(),
+    analysisAgent.getGraphAsync(),
+  ]);
 
-await Promise.all([
-  saveGraphToPng(workflowData, "workflow.png"),
-  saveGraphToPng(researchAgentData, "researchAgent.png"),
-  saveGraphToPng(analysisAgentData, "analysisAgent.png"),
-]);
+  await Promise.all([
+    saveGraphToPng(workflowData, "workflow.png"),
+    saveGraphToPng(researchAgentData, "researchAgent.png"),
+    saveGraphToPng(analysisAgentData, "analysisAgent.png"),
+  ]);
+} catch (error) {
+  console.error(error);
+}
 
 let i = 0;
 const history: unknown[] = [];
